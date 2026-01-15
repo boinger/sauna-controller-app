@@ -46,7 +46,10 @@ Carthage/Checkouts/
 *.swo
 *~
 
-# Secrets (never commit)
+# Secrets and credentials (never commit)
 Secrets.swift
 **/Secrets/
+*.mobileprovision
+*.p12
+*.cer
 CLAUDE.md
