@@ -28,6 +28,8 @@ struct PowerControlView: View {
         }
         .buttonStyle(.plain)
         .padding(.horizontal)
+        .accessibilityLabel(isHeating ? "Stop heating" : "Start sauna")
+        .accessibilityHint(isHeating ? "Turns off the sauna heater" : "Turns on the sauna heater")
     }
 }
 

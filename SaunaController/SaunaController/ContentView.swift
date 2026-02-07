@@ -6,10 +6,10 @@
 //
 
 import SwiftUI
-import SwiftData
 
 struct ContentView: View {
     @EnvironmentObject var saunaManager: SaunaManager
+    @State private var debounceTask: Task<Void, Never>?
 
     var body: some View {
         NavigationStack {
@@ -47,6 +47,25 @@ struct ContentView: View {
                         Image(systemName: "gear")
                     }
                 }
+            }
+            .onChange(of: saunaManager.targetTemperature) { _, newValue in
+                debounceTask?.cancel()
+                debounceTask = Task {
+                    try? await Task.sleep(for: .milliseconds(300))
+                    guard !Task.isCancelled else { return }
+                    await saunaManager.setTargetTemperature(newValue)
+                }
+            }
+            .alert(
+                "Error",
+                isPresented: Binding(
+                    get: { saunaManager.lastError != nil },
+                    set: { if !$0 { saunaManager.lastError = nil } }
+                )
+            ) {
+                Button("OK") { saunaManager.lastError = nil }
+            } message: {
+                Text(saunaManager.lastError ?? "")
             }
         }
     }

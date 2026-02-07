@@ -10,7 +10,6 @@ import SwiftUI
 struct SettingsView: View {
     @EnvironmentObject var saunaManager: SaunaManager
     @AppStorage("maxSessionMinutes") private var maxSessionMinutes: Int = 60
-    @AppStorage("controllerIP") private var controllerIP: String = ""
 
     var body: some View {
         Form {
@@ -18,10 +17,10 @@ struct SettingsView: View {
                 HStack {
                     Text("IP Address")
                     Spacer()
-                    TextField("192.168.1.x", text: $controllerIP)
+                    TextField("192.168.1.x", text: $saunaManager.controllerAddress)
                         .textFieldStyle(.roundedBorder)
                         .frame(width: 150)
-                        .keyboardType(.decimalPad)
+                        .keyboardType(.numbersAndPunctuation)
                         .multilineTextAlignment(.trailing)
                 }
 
@@ -32,9 +31,11 @@ struct SettingsView: View {
                         Circle()
                             .fill(saunaManager.isConnected ? .green : .red)
                             .frame(width: 10, height: 10)
+                            .accessibilityHidden(true)
                         Text(saunaManager.isConnected ? "Connected" : "Disconnected")
                             .foregroundStyle(.secondary)
                     }
+                    .accessibilityLabel("Connection status: \(saunaManager.isConnected ? "Connected" : "Disconnected")")
                 }
             }
 
@@ -43,12 +44,12 @@ struct SettingsView: View {
             }
 
             Section("About") {
-                LabeledContent("Version", value: "1.0.0")
+                LabeledContent("Version", value: Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "Unknown")
                 LabeledContent("Firmware", value: saunaManager.firmwareVersion ?? "Unknown")
             }
         }
         .navigationTitle("Settings")
-        .onChange(of: controllerIP) { _, newValue in
+        .onChange(of: saunaManager.controllerAddress) { _, newValue in
             saunaManager.updateControllerAddress(newValue)
         }
     }

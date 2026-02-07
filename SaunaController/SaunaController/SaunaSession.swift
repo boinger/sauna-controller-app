@@ -31,9 +31,8 @@ final class SaunaSession {
 
     /// Marks the session as complete and calculates duration
     func complete() {
-        endTime = Date()
-        if let end = endTime {
-            durationMinutes = Int(end.timeIntervalSince(startTime) / 60)
-        }
+        let end = Date()
+        endTime = end
+        durationMinutes = Int(end.timeIntervalSince(startTime) / 60)
     }
 }

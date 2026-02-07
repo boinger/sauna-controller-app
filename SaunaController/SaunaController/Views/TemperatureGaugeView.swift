@@ -12,7 +12,8 @@ struct TemperatureGaugeView: View {
     let targetTemp: Double
 
     private var progress: Double {
-        min(currentTemp / targetTemp, 1.0)
+        guard targetTemp > 0 else { return 0 }
+        return min(currentTemp / targetTemp, 1.0)
     }
 
     private var temperatureColor: Color {
@@ -52,7 +53,8 @@ struct TemperatureGaugeView: View {
                         .foregroundStyle(.secondary)
                 }
             }
-            .frame(width: 240, height: 240)
+            .frame(maxWidth: 240, maxHeight: 240)
+            .aspectRatio(1, contentMode: .fit)
 
             // Target indicator
             HStack {
@@ -63,6 +65,9 @@ struct TemperatureGaugeView: View {
             }
             .font(.subheadline)
         }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Temperature gauge")
+        .accessibilityValue("Current \(Int(currentTemp)) degrees, target \(Int(targetTemp)) degrees, \(Int(progress * 100)) percent")
     }
 }
 

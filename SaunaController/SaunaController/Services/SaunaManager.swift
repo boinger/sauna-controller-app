@@ -5,8 +5,19 @@
 //  Created by Jeff Vier on 1/14/26.
 //
 
-import Foundation
 import Combine
+import Foundation
+
+// MARK: - Protocols
+
+protocol NetworkSession: Sendable {
+    func data(for request: URLRequest) async throws -> (Data, URLResponse)
+    func data(from url: URL) async throws -> (Data, URLResponse)
+}
+
+extension URLSession: NetworkSession {}
+
+// MARK: - SaunaManager
 
 /// Manages communication with the ESP32 sauna controller
 @MainActor
@@ -18,23 +29,30 @@ class SaunaManager: ObservableObject {
     @Published var isHeating: Bool = false
     @Published var isConnected: Bool = false
     @Published var firmwareVersion: String?
+    @Published var lastError: String?
 
-    // MARK: - Private Properties
+    // MARK: - Properties
 
-    private var controllerAddress: String = ""
+    @Published var controllerAddress: String = ""
     private var pollingTask: Task<Void, Never>?
-    private let session: URLSession
+    private let session: NetworkSession
+    private let defaults: UserDefaults
 
     // MARK: - Initialization
 
-    init() {
-        let config = URLSessionConfiguration.default
-        config.timeoutIntervalForRequest = 5
-        config.timeoutIntervalForResource = 10
-        self.session = URLSession(configuration: config)
+    init(session: NetworkSession? = nil, defaults: UserDefaults = .standard) {
+        if let session {
+            self.session = session
+        } else {
+            let config = URLSessionConfiguration.default
+            config.timeoutIntervalForRequest = 5
+            config.timeoutIntervalForResource = 10
+            self.session = URLSession(configuration: config)
+        }
+        self.defaults = defaults
 
         // Load saved address
-        if let saved = UserDefaults.standard.string(forKey: "controllerIP"), !saved.isEmpty {
+        if let saved = defaults.string(forKey: "controllerIP"), !saved.isEmpty {
             controllerAddress = saved
             startPolling()
         }
@@ -43,8 +61,7 @@ class SaunaManager: ObservableObject {
     // MARK: - Public Methods
 
     func updateControllerAddress(_ address: String) {
-        controllerAddress = address
-        UserDefaults.standard.set(address, forKey: "controllerIP")
+        defaults.set(address, forKey: "controllerIP")
 
         pollingTask?.cancel()
         if !address.isEmpty {
@@ -79,7 +96,7 @@ class SaunaManager: ObservableObject {
                 isHeating = enabled
             }
         } catch {
-            print("Failed to set heater state: \(error)")
+            lastError = "Failed to set heater state: \(error.localizedDescription)"
         }
     }
 
@@ -103,7 +120,7 @@ class SaunaManager: ObservableObject {
                 targetTemperature = temp
             }
         } catch {
-            print("Failed to set target temperature: \(error)")
+            lastError = "Failed to set target temperature: \(error.localizedDescription)"
         }
     }
 
@@ -115,9 +132,11 @@ class SaunaManager: ObservableObject {
 
     private func startPolling() {
         pollingTask = Task {
+            var backoff: Duration = .seconds(2)
             while !Task.isCancelled {
                 await fetchStatus()
-                try? await Task.sleep(for: .seconds(2))
+                backoff = isConnected ? .seconds(2) : min(backoff * 2, .seconds(30))
+                try? await Task.sleep(for: backoff)
             }
         }
     }
@@ -143,26 +162,11 @@ class SaunaManager: ObservableObject {
             isHeating = status.isHeating
             firmwareVersion = status.firmwareVersion
             isConnected = true
+            lastError = nil
 
         } catch {
             isConnected = false
-            print("Failed to fetch status: \(error)")
+            print("Failed to fetch status: \(error.localizedDescription)")
         }
-    }
-}
-
-// MARK: - Response Models
-
-struct SaunaStatus: Codable {
-    let currentTemperature: Double
-    let targetTemperature: Double
-    let isHeating: Bool
-    let firmwareVersion: String?
-
-    enum CodingKeys: String, CodingKey {
-        case currentTemperature = "current_temp"
-        case targetTemperature = "target_temp"
-        case isHeating = "heating"
-        case firmwareVersion = "firmware"
     }
 }

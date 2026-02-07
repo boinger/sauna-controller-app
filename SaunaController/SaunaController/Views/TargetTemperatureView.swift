@@ -20,30 +20,31 @@ struct TargetTemperatureView: View {
 
             HStack(spacing: 24) {
                 Button {
-                    if targetTemp > minTemp {
-                        targetTemp -= 5
-                    }
+                    targetTemp = max(targetTemp - 5, minTemp)
                 } label: {
                     Image(systemName: "minus.circle.fill")
                         .font(.system(size: 44))
                         .foregroundStyle(.blue)
                 }
                 .disabled(targetTemp <= minTemp)
+                .accessibilityLabel("Decrease temperature")
+                .accessibilityHint("Decreases target by 5 degrees")
 
                 Text("\(Int(targetTemp))°C")
                     .font(.system(size: 32, weight: .medium, design: .rounded))
                     .frame(width: 100)
+                    .accessibilityLabel("Target temperature \(Int(targetTemp)) degrees")
 
                 Button {
-                    if targetTemp < maxTemp {
-                        targetTemp += 5
-                    }
+                    targetTemp = min(targetTemp + 5, maxTemp)
                 } label: {
                     Image(systemName: "plus.circle.fill")
                         .font(.system(size: 44))
                         .foregroundStyle(.red)
                 }
                 .disabled(targetTemp >= maxTemp)
+                .accessibilityLabel("Increase temperature")
+                .accessibilityHint("Increases target by 5 degrees")
             }
 
             Slider(value: $targetTemp, in: minTemp...maxTemp, step: 5)
