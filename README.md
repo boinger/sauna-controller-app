@@ -34,8 +34,8 @@ Native iOS app for controlling your ESP32-based sauna.
 
 ## Related
 
-- [Sauna Controller ESP32 Firmware](https://github.com/YOUR_USERNAME/sauna-controller-esp32) — The open-source firmware this app controls
+- [Sauna Controller ESP32 Firmware](https://github.com/boinger/sauna-controller-esp32) — The open-source firmware this app controls
 
 ## License
 
-Private — All rights reserved.
+Apache License 2.0 — see [LICENSE](LICENSE)
