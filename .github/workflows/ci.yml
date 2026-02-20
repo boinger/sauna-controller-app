@@ -8,6 +8,8 @@ on:
 
 jobs:
   build-and-test:
+    # macos-15 runners ship Xcode 16.x with iPhone 16 simulators;
+    # local dev uses iPhone 17 Pro (Xcode 17 / macOS 26)
     runs-on: macos-15
 
     steps:

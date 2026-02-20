@@ -170,7 +170,7 @@ class SaunaManager: ObservableObject {
     // MARK: - Private Methods
 
     private var baseURL: String {
-        "http://\(controllerAddress)"
+        "http://\(controllerAddress):8080"
     }
 
     private func startPolling() {
