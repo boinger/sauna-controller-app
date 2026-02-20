@@ -31,12 +31,18 @@ class SaunaManager: ObservableObject {
     @Published var firmwareVersion: String?
     @Published var lastError: String?
 
+    @Published var isCommandInFlight: Bool = false
+
     // MARK: - Properties
 
     @Published var controllerAddress: String = ""
-    private var pollingTask: Task<Void, Never>?
+    nonisolated(unsafe) private var pollingTask: Task<Void, Never>?
     private let session: NetworkSession
     private let defaults: UserDefaults
+
+    deinit {
+        pollingTask?.cancel()
+    }
 
     // MARK: - Initialization
 
@@ -80,20 +86,35 @@ class SaunaManager: ObservableObject {
         guard !controllerAddress.isEmpty else { return }
 
         let endpoint = "\(baseURL)/heater"
-        guard let url = URL(string: endpoint) else { return }
+        guard let url = URL(string: endpoint) else {
+            lastError = "Invalid controller address"
+            return
+        }
+
+        lastError = nil
+        isCommandInFlight = true
+        defer { isCommandInFlight = false }
 
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
 
         let body = ["state": enabled ? 1 : 0]
-        request.httpBody = try? JSONEncoder().encode(body)
+        do {
+            request.httpBody = try JSONEncoder().encode(body)
+        } catch {
+            lastError = "Failed to encode request: \(error.localizedDescription)"
+            return
+        }
 
         do {
             let (_, response) = try await session.data(for: request)
-            if let httpResponse = response as? HTTPURLResponse,
-               httpResponse.statusCode == 200 {
-                isHeating = enabled
+            if let httpResponse = response as? HTTPURLResponse {
+                if httpResponse.statusCode == 200 {
+                    isHeating = enabled
+                } else {
+                    lastError = "Heater command failed (HTTP \(httpResponse.statusCode))"
+                }
             }
         } catch {
             lastError = "Failed to set heater state: \(error.localizedDescription)"
@@ -104,20 +125,35 @@ class SaunaManager: ObservableObject {
         guard !controllerAddress.isEmpty else { return }
 
         let endpoint = "\(baseURL)/target"
-        guard let url = URL(string: endpoint) else { return }
+        guard let url = URL(string: endpoint) else {
+            lastError = "Invalid controller address"
+            return
+        }
+
+        lastError = nil
+        isCommandInFlight = true
+        defer { isCommandInFlight = false }
 
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
 
         let body = ["temperature": temp]
-        request.httpBody = try? JSONEncoder().encode(body)
+        do {
+            request.httpBody = try JSONEncoder().encode(body)
+        } catch {
+            lastError = "Failed to encode request: \(error.localizedDescription)"
+            return
+        }
 
         do {
             let (_, response) = try await session.data(for: request)
-            if let httpResponse = response as? HTTPURLResponse,
-               httpResponse.statusCode == 200 {
-                targetTemperature = temp
+            if let httpResponse = response as? HTTPURLResponse {
+                if httpResponse.statusCode == 200 {
+                    targetTemperature = temp
+                } else {
+                    lastError = "Temperature command failed (HTTP \(httpResponse.statusCode))"
+                }
             }
         } catch {
             lastError = "Failed to set target temperature: \(error.localizedDescription)"

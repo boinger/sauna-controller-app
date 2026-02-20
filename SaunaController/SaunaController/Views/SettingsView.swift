@@ -10,6 +10,7 @@ import SwiftUI
 struct SettingsView: View {
     @EnvironmentObject var saunaManager: SaunaManager
     @AppStorage("maxSessionMinutes") private var maxSessionMinutes: Int = 60
+    @State private var addressDebounce: Task<Void, Never>?
 
     var body: some View {
         Form {
@@ -50,7 +51,12 @@ struct SettingsView: View {
         }
         .navigationTitle("Settings")
         .onChange(of: saunaManager.controllerAddress) { _, newValue in
-            saunaManager.updateControllerAddress(newValue)
+            addressDebounce?.cancel()
+            addressDebounce = Task {
+                try? await Task.sleep(for: .milliseconds(500))
+                guard !Task.isCancelled else { return }
+                saunaManager.updateControllerAddress(newValue)
+            }
         }
     }
 }

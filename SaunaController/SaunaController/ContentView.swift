@@ -22,7 +22,15 @@ struct ContentView: View {
 
                 // Target Temperature Control
                 TargetTemperatureView(
-                    targetTemp: $saunaManager.targetTemperature
+                    displayTemp: saunaManager.targetTemperature,
+                    onChanged: { newValue in
+                        debounceTask?.cancel()
+                        debounceTask = Task {
+                            try? await Task.sleep(for: .milliseconds(300))
+                            guard !Task.isCancelled else { return }
+                            await saunaManager.setTargetTemperature(newValue)
+                        }
+                    }
                 )
 
                 // Power Control
@@ -34,6 +42,7 @@ struct ContentView: View {
                         }
                     }
                 )
+                .disabled(saunaManager.isCommandInFlight)
 
                 Spacer()
             }
@@ -46,14 +55,6 @@ struct ContentView: View {
                     } label: {
                         Image(systemName: "gear")
                     }
-                }
-            }
-            .onChange(of: saunaManager.targetTemperature) { _, newValue in
-                debounceTask?.cancel()
-                debounceTask = Task {
-                    try? await Task.sleep(for: .milliseconds(300))
-                    guard !Task.isCancelled else { return }
-                    await saunaManager.setTargetTemperature(newValue)
                 }
             }
             .alert(

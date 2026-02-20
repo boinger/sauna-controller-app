@@ -8,7 +8,10 @@
 import SwiftUI
 
 struct TargetTemperatureView: View {
-    @Binding var targetTemp: Double
+    let displayTemp: Double
+    let onChanged: (Double) -> Void
+
+    @State private var localTemp: Double = 75.0
 
     private let minTemp: Double = 40
     private let maxTemp: Double = 100
@@ -20,43 +23,49 @@ struct TargetTemperatureView: View {
 
             HStack(spacing: 24) {
                 Button {
-                    targetTemp = max(targetTemp - 5, minTemp)
+                    localTemp = max(localTemp - 5, minTemp)
                 } label: {
                     Image(systemName: "minus.circle.fill")
                         .font(.system(size: 44))
                         .foregroundStyle(.blue)
                 }
-                .disabled(targetTemp <= minTemp)
+                .disabled(localTemp <= minTemp)
                 .accessibilityLabel("Decrease temperature")
                 .accessibilityHint("Decreases target by 5 degrees")
 
-                Text("\(Int(targetTemp))°C")
+                Text("\(Int(localTemp))°C")
                     .font(.system(size: 32, weight: .medium, design: .rounded))
                     .frame(width: 100)
-                    .accessibilityLabel("Target temperature \(Int(targetTemp)) degrees")
+                    .accessibilityLabel("Target temperature \(Int(localTemp)) degrees")
 
                 Button {
-                    targetTemp = min(targetTemp + 5, maxTemp)
+                    localTemp = min(localTemp + 5, maxTemp)
                 } label: {
                     Image(systemName: "plus.circle.fill")
                         .font(.system(size: 44))
                         .foregroundStyle(.red)
                 }
-                .disabled(targetTemp >= maxTemp)
+                .disabled(localTemp >= maxTemp)
                 .accessibilityLabel("Increase temperature")
                 .accessibilityHint("Increases target by 5 degrees")
             }
 
-            Slider(value: $targetTemp, in: minTemp...maxTemp, step: 5)
+            Slider(value: $localTemp, in: minTemp...maxTemp, step: 5)
                 .tint(.orange)
                 .padding(.horizontal)
+                .onChange(of: localTemp) { _, newValue in
+                    onChanged(newValue)
+                }
         }
         .padding()
         .background(.gray.opacity(0.1))
         .clipShape(RoundedRectangle(cornerRadius: 16))
+        .onAppear {
+            localTemp = displayTemp
+        }
     }
 }
 
 #Preview {
-    TargetTemperatureView(targetTemp: .constant(75))
+    TargetTemperatureView(displayTemp: 75, onChanged: { _ in })
 }
