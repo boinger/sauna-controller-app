@@ -19,6 +19,7 @@ jobs:
       - name: Build
         run: |
           xcodebuild build \
+            -project SaunaController/SaunaController.xcodeproj \
             -scheme SaunaController \
             -destination 'platform=iOS Simulator,name=iPhone 16 Pro' \
             -quiet
@@ -26,6 +27,7 @@ jobs:
       - name: Test
         run: |
           xcodebuild test \
+            -project SaunaController/SaunaController.xcodeproj \
             -scheme SaunaController \
             -destination 'platform=iOS Simulator,name=iPhone 16 Pro' \
             -only-testing:SaunaControllerTests \
