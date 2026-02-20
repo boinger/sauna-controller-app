@@ -7,6 +7,8 @@
 
 import Foundation
 
+/// Response model for `GET /status` on the ESP32 controller (port 8080).
+/// JSON fields use snake_case; `CodingKeys` maps them to Swift camelCase.
 struct SaunaStatus: Codable {
     let currentTemperature: Double
     let targetTemperature: Double

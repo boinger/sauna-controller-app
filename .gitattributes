@@ -1,0 +1,23 @@
+# Auto-detect text files and normalize line endings
+* text=auto
+
+# Source code
+*.swift text
+*.md text
+*.yml text
+*.yaml text
+*.json text
+*.plist text
+
+# Xcode
+*.pbxproj text -merge
+*.xcworkspacedata text
+*.xcscheme text
+
+# Binary files
+*.png binary
+*.jpg binary
+*.gif binary
+*.ico binary
+*.zip binary
+*.xcassets binary

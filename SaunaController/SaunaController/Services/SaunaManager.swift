@@ -10,8 +10,15 @@ import Foundation
 
 // MARK: - Protocols
 
+/// Abstracts URLSession for testability. Inject a mock conforming to this
+/// protocol to test network-dependent code without real HTTP calls.
 protocol NetworkSession: Sendable {
+    /// Perform a request (POST commands to `/heater` and `/target`).
+    /// Throws on network failure; callers must also check the HTTP status code.
     func data(for request: URLRequest) async throws -> (Data, URLResponse)
+
+    /// Fetch data from a URL (GET polling of `/status`).
+    /// Throws on network failure; callers must also check the HTTP status code.
     func data(from url: URL) async throws -> (Data, URLResponse)
 }
 
