@@ -12,11 +12,3 @@
 # Xcode
 *.pbxproj text -merge
 *.xcworkspacedata text
-*.xcscheme text
-
-# Binary files
-*.png binary
-*.jpg binary
-*.gif binary
-*.ico binary
-*.zip binary
